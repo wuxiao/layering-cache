@@ -1,7 +1,7 @@
 package com.github.xiaolyuh.tool.servlet;
 
 
-import com.alibaba.fastjson.JSON;
+import com.github.xiaolyuh.util.JsonUtils;
 import com.github.xiaolyuh.manager.AbstractCacheManager;
 import com.github.xiaolyuh.stats.CacheStatsInfo;
 import com.github.xiaolyuh.tool.service.CacheService;
@@ -84,9 +84,9 @@ public class LayeringCacheServlet extends HttpServlet {
             boolean success = BeanFactory.getBean(UserService.class).login(initServletData, usernameParam, passwordParam, redisTemplate, token);
 
             if (success) {
-                response.getWriter().write(JSON.toJSONString(Result.success(token)));
+                response.getWriter().write(JsonUtils.toJson(Result.success(token)));
             } else {
-                response.getWriter().write(JSON.toJSONString(Result.error("用户名或密码错误")));
+                response.getWriter().write(JsonUtils.toJson(Result.error("用户名或密码错误")));
             }
             return;
         }
@@ -96,9 +96,9 @@ public class LayeringCacheServlet extends HttpServlet {
             boolean success = BeanFactory.getBean(UserService.class).loginOut(redisTemplate, token);
 
             if (success) {
-                response.getWriter().write(JSON.toJSONString(Result.success()));
+                response.getWriter().write(JsonUtils.toJson(Result.success()));
             } else {
-                response.getWriter().write(JSON.toJSONString(Result.error("用户名或密码错误")));
+                response.getWriter().write(JsonUtils.toJson(Result.error("用户名或密码错误")));
             }
             return;
         }
@@ -106,14 +106,14 @@ public class LayeringCacheServlet extends HttpServlet {
         // 重置缓存统计数据
         if (URLConstant.RESET_CACHE_STAT.equals(path)) {
             if (!initServletData.getEnableUpdate()) {
-                response.getWriter().write(JSON.toJSONString(Result.error("你没有开启更新数据的权限")));
+                response.getWriter().write(JsonUtils.toJson(Result.error("你没有开启更新数据的权限")));
                 return;
             }
             Set<AbstractCacheManager> cacheManagers = AbstractCacheManager.getCacheManager();
             for (AbstractCacheManager cacheManager : cacheManagers) {
                 cacheManager.resetCacheStat();
             }
-            response.getWriter().write(JSON.toJSONString(Result.success()));
+            response.getWriter().write(JsonUtils.toJson(Result.success()));
             // 刷新session
             BeanFactory.getBean(UserService.class).refreshSession(redisTemplate, token);
             return;
@@ -130,7 +130,7 @@ public class LayeringCacheServlet extends HttpServlet {
                     statsList.addAll(cacheStats);
                 }
             }
-            response.getWriter().write(JSON.toJSONString(Result.success(statsList)));
+            response.getWriter().write(JsonUtils.toJson(Result.success(statsList)));
             // 刷新session
             BeanFactory.getBean(UserService.class).refreshSession(redisTemplate, token);
             return;
@@ -139,7 +139,7 @@ public class LayeringCacheServlet extends HttpServlet {
         // 删除缓存
         if (URLConstant.CACHE_STATS_DELETE_CACHW.equals(path)) {
             if (!initServletData.getEnableUpdate()) {
-                response.getWriter().write(JSON.toJSONString(Result.error("你没有开启更新数据的权限")));
+                response.getWriter().write(JsonUtils.toJson(Result.error("你没有开启更新数据的权限")));
                 return;
             }
 
@@ -147,7 +147,7 @@ public class LayeringCacheServlet extends HttpServlet {
             String internalKey = request.getParameter("internalKey");
             String key = request.getParameter("key");
             BeanFactory.getBean(CacheService.class).deleteCache(cacheNameParam, internalKey, key);
-            response.getWriter().write(JSON.toJSONString(Result.success()));
+            response.getWriter().write(JsonUtils.toJson(Result.success()));
             // 刷新session
             BeanFactory.getBean(UserService.class).refreshSession(redisTemplate, token);
             return;

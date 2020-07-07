@@ -1,6 +1,6 @@
 package com.github.xiaolyuh.demo.controller;
 
-import com.alibaba.fastjson.JSON;
+import com.github.xiaolyuh.util.JsonUtils;
 import com.github.xiaolyuh.demo.entity.Person;
 import com.github.xiaolyuh.demo.utils.OkHttpClientUtil;
 import okhttp3.FormBody;
@@ -26,7 +26,7 @@ public class CacheControllerTest {
 
         Person person = new Person(1, "name1", 12, "address1");
         RequestBody requestBody = FormBody.create(MediaType.parse("application/json; charset=utf-8")
-                , JSON.toJSONString(person));
+                , JsonUtils.toJson(person));
         String post = OkHttpClientUtil.post(host + "put", requestBody);
         System.out.println("返回结果：" + post);
     }
@@ -37,7 +37,7 @@ public class CacheControllerTest {
 
         Person person = new Person(1, "name1", 12, "address1");
         RequestBody requestBody = FormBody.create(MediaType.parse("application/json; charset=utf-8")
-                , JSON.toJSONString(person));
+                , JsonUtils.toJson(person));
         String post = OkHttpClientUtil.post(host + "able", requestBody);
         System.out.println("返回结果：" + post);
     }
@@ -47,7 +47,7 @@ public class CacheControllerTest {
     public void testEvit() throws IOException {
         Person person = new Person(1, "name1", 12, "address1");
         RequestBody requestBody = FormBody.create(MediaType.parse("application/json; charset=utf-8")
-                , JSON.toJSONString(person));
+                , JsonUtils.toJson(person));
         String post = OkHttpClientUtil.post(host + "evit", requestBody);
         System.out.println("返回结果：" + post);
     }

@@ -1,12 +1,12 @@
 package com.github.xiaolyuh.stats;
 
-import com.alibaba.fastjson.JSON;
 import com.github.xiaolyuh.cache.Cache;
 import com.github.xiaolyuh.cache.LayeringCache;
 import com.github.xiaolyuh.manager.AbstractCacheManager;
 import com.github.xiaolyuh.manager.CacheManager;
 import com.github.xiaolyuh.setting.LayeringCacheSetting;
 import com.github.xiaolyuh.support.Lock;
+import com.github.xiaolyuh.util.JsonUtils;
 import com.github.xiaolyuh.util.RedisHelper;
 import com.github.xiaolyuh.util.StringUtils;
 import org.slf4j.Logger;
@@ -132,7 +132,7 @@ public class StatsService {
                                 // 将缓存统计数据写到redis
                                 redisTemplate.opsForValue().set(redisKey, cacheStats, 24, TimeUnit.HOURS);
 
-                                logger.info("Layering Cache 统计信息：{}", JSON.toJSONString(cacheStats));
+                                logger.info("Layering Cache 统计信息：{}", JsonUtils.toJson(cacheStats));
                             }
                         } catch (Exception e) {
                             logger.error(e.getMessage(), e);

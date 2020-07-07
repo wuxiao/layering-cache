@@ -1,11 +1,8 @@
 package com.github.xiaolyuh.demo.config;
 
-import com.alibaba.fastjson.parser.ParserConfig;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.xiaolyuh.serializer.FastJsonRedisSerializer;
-import com.github.xiaolyuh.serializer.KryoRedisSerializer;
 import com.github.xiaolyuh.serializer.StringRedisSerializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -40,11 +37,8 @@ public class RedisConfig {
         om.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL);
         jackson2JsonRedisSerializer.setObjectMapper(om);
 
-        KryoRedisSerializer<Object> kryoRedisSerializer = new KryoRedisSerializer<>(Object.class);
-
-        // 设置值（value）的序列化采用KryoRedisSerializer。
-        redisTemplate.setValueSerializer(kryoRedisSerializer);
-        redisTemplate.setHashValueSerializer(kryoRedisSerializer);
+        redisTemplate.setValueSerializer(jackson2JsonRedisSerializer);
+        redisTemplate.setHashValueSerializer(jackson2JsonRedisSerializer);
         // 设置键（key）的序列化采用StringRedisSerializer。
         redisTemplate.setKeySerializer(new StringRedisSerializer());
         redisTemplate.setHashKeySerializer(new StringRedisSerializer());

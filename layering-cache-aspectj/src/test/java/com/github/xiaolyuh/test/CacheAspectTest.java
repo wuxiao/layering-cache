@@ -1,6 +1,6 @@
 package com.github.xiaolyuh.test;
 
-import com.alibaba.fastjson.JSON;
+import com.github.xiaolyuh.util.JsonUtils;
 import com.github.xiaolyuh.config.CacheConfig;
 import com.github.xiaolyuh.domain.User;
 import com.github.xiaolyuh.manager.CacheManager;
@@ -391,7 +391,7 @@ public class CacheAspectTest {
         long userId = 116;
         testService.putUser(userId);
         User user = testService.getUserById(userId);
-        logger.debug(JSON.toJSONString(user));
+        logger.debug(JsonUtils.toJson(user));
         Assert.assertNotNull(user);
         Assert.assertEquals(user.getUserId(), 11L);
     }
@@ -399,7 +399,7 @@ public class CacheAspectTest {
     @Test
     public void testPutUserNoParam() {
         User user = testService.putUserNoParam();
-        logger.debug(JSON.toJSONString(user));
+        logger.debug(JsonUtils.toJson(user));
         Assert.assertNotNull(user);
         Assert.assertEquals(user.getUserId(), 11L);
     }
@@ -410,7 +410,7 @@ public class CacheAspectTest {
         testService.putNullUser1118(userId);
         sleep(1);
         User user = testService.getUserById118(userId);
-        logger.debug(JSON.toJSONString(user));
+        logger.debug(JsonUtils.toJson(user));
         Assert.assertNull(user);
     }
 
@@ -420,7 +420,7 @@ public class CacheAspectTest {
         long userId = 118_1117_1;
         testService.putNullUserAllowNullValueTrueMagnification(userId);
         User user = testService.getUserById(userId);
-        logger.debug(JSON.toJSONString(user));
+        logger.debug(JsonUtils.toJson(user));
         Assert.assertNull(user);
         sleep(3);
         user = testService.getUserById(userId);
@@ -435,7 +435,7 @@ public class CacheAspectTest {
         long userId = 118_1117_6;
         testService.putNullUserAllowNullValueFalse(userId);
         User user = testService.getUserById(userId);
-        logger.debug(JSON.toJSONString(user));
+        logger.debug(JsonUtils.toJson(user));
         Assert.assertNotNull(user);
     }
 

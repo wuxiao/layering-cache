@@ -1,6 +1,6 @@
 package com.github.xiaolyuh.cache.redis;
 
-import com.alibaba.fastjson.JSON;
+import com.github.xiaolyuh.util.JsonUtils;
 import com.github.xiaolyuh.cache.AbstractValueAdaptingCache;
 import com.github.xiaolyuh.setting.SecondaryCacheSetting;
 import com.github.xiaolyuh.support.AwaitThreadContainer;
@@ -158,13 +158,13 @@ public class RedisCache extends AbstractValueAdaptingCache {
     @Override
     public void put(Object key, Object value) {
         RedisCacheKey redisCacheKey = getRedisCacheKey(key);
-        logger.debug("redis缓存 key= {} put缓存，缓存值：{}", redisCacheKey.getKey(), JSON.toJSONString(value));
+        logger.debug("redis缓存 key= {} put缓存，缓存值：{}", redisCacheKey.getKey(), JsonUtils.toJson(value));
         putValue(redisCacheKey, value);
     }
 
     @Override
     public Object putIfAbsent(Object key, Object value) {
-        logger.debug("redis缓存 key= {} putIfAbsent缓存，缓存值：{}", getRedisCacheKey(key).getKey(), JSON.toJSONString(value));
+        logger.debug("redis缓存 key= {} putIfAbsent缓存，缓存值：{}", getRedisCacheKey(key).getKey(), JsonUtils.toJson(value));
         Object reult = get(key);
         if (reult != null) {
             return reult;
@@ -254,7 +254,7 @@ public class RedisCache extends AbstractValueAdaptingCache {
         try {
             // 加载数据
             Object result = putValue(key, valueLoader.call());
-            logger.debug("redis缓存 key={} 执行被缓存的方法，并将其放入缓存, 耗时：{}。数据:{}", key.getKey(), System.currentTimeMillis() - start, JSON.toJSONString(result));
+            logger.debug("redis缓存 key={} 执行被缓存的方法，并将其放入缓存, 耗时：{}。数据:{}", key.getKey(), System.currentTimeMillis() - start, JsonUtils.toJson(result));
 
             if (isLoad && isStats()) {
                 getCacheStats().addCachedMethodRequestTime(System.currentTimeMillis() - start);

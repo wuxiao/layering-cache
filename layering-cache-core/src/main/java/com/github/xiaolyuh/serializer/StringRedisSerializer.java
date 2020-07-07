@@ -1,6 +1,6 @@
 package com.github.xiaolyuh.serializer;
 
-import com.alibaba.fastjson.JSON;
+import com.github.xiaolyuh.util.JsonUtils;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.util.Assert;
 
@@ -35,7 +35,7 @@ public class StringRedisSerializer implements RedisSerializer<Object> {
 
     @Override
     public byte[] serialize(Object object) {
-        String string = JSON.toJSONString(object);
+        String string = JsonUtils.toJson(object);
         if (string == null) {
             return null;
         }

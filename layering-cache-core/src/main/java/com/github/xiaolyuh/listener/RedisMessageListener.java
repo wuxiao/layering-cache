@@ -1,10 +1,9 @@
 package com.github.xiaolyuh.listener;
 
-import com.alibaba.fastjson.JSON;
 import com.github.xiaolyuh.cache.Cache;
 import com.github.xiaolyuh.cache.LayeringCache;
 import com.github.xiaolyuh.manager.AbstractCacheManager;
-import com.github.xiaolyuh.manager.CacheManager;
+import com.github.xiaolyuh.util.JsonUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.connection.Message;
@@ -31,7 +30,7 @@ public class RedisMessageListener extends MessageListenerAdapter {
         // 解析订阅发布的信息，获取缓存的名称和缓存的key
         RedisPubSubMessage redisPubSubMessage = (RedisPubSubMessage) cacheManager.getRedisTemplate()
                 .getValueSerializer().deserialize(message.getBody());
-        log.debug("redis消息订阅者接收到频道【{}】发布的消息。消息内容：{}", new String(message.getChannel()), JSON.toJSONString(redisPubSubMessage));
+        log.debug("redis消息订阅者接收到频道【{}】发布的消息。消息内容：{}", new String(message.getChannel()), JsonUtils.toJson(redisPubSubMessage));
 
         // 根据缓存名称获取多级缓存，可能有多个
         Collection<Cache> caches = cacheManager.getCache(redisPubSubMessage.getCacheName());

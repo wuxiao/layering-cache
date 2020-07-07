@@ -1,6 +1,6 @@
 package com.github.xiaolyuh.setting;
 
-import com.alibaba.fastjson.annotation.JSONField;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.io.Serializable;
 
@@ -47,7 +47,7 @@ public class LayeringCacheSetting implements Serializable {
         internalKey();
     }
 
-    @JSONField(serialize = false, deserialize = false)
+    @JsonIgnore
     private void internalKey() {
         // 一级缓存有效时间-二级缓存有效时间-二级缓存自动刷新时间
         StringBuilder sb = new StringBuilder();

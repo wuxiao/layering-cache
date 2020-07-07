@@ -1,6 +1,6 @@
 package com.github.xiaolyuh.demo.utils;
 
-import com.alibaba.fastjson.JSON;
+import com.github.xiaolyuh.util.JsonUtils;
 import okhttp3.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,7 +42,7 @@ public abstract class OkHttpClientUtil {
         //创建/Call
         Response response = okHttpClient.newCall(request).execute();
         if (!response.isSuccessful()) {
-            logger.error("访问外部系统异常 {}: {}", url, JSON.toJSONString(response));
+            logger.error("访问外部系统异常 {}: {}", url, JsonUtils.toJson(response));
             throw new RemoteAccessException("访问外部系统异常 " + url);
         }
         return response.body().string();
@@ -61,7 +61,7 @@ public abstract class OkHttpClientUtil {
         //创建/Call
         Response response = okHttpClient.newCall(request).execute();
         if (!response.isSuccessful()) {
-            logger.error("访问外部系统异常 {}: {}", url, JSON.toJSONString(response));
+            logger.error("访问外部系统异常 {}: {}", url, JsonUtils.toJson(response));
             throw new RemoteAccessException("访问外部系统异常 " + url);
         }
         return response.body().string();
@@ -71,7 +71,7 @@ public abstract class OkHttpClientUtil {
     public static String post(String url, Map<String, ?> param, Map<String, String> header) throws Exception {
         // 生成requestBody
         RequestBody requestBody = FormBody.create(MediaType.parse("application/json; charset=utf-8")
-                , JSON.toJSONString(param));
+                , JsonUtils.toJson(param));
 
         Request.Builder builder = new Request.Builder()
                 //请求的url
@@ -87,7 +87,7 @@ public abstract class OkHttpClientUtil {
         //创建/Call
         Response response = okHttpClient.newCall(request).execute();
         if (!response.isSuccessful()) {
-            logger.error("访问外部系统异常 {}: {}", url, JSON.toJSONString(response));
+            logger.error("访问外部系统异常 {}: {}", url, JsonUtils.toJson(response));
             throw new RemoteAccessException("访问外部系统异常 " + url);
         }
         return response.body().string();
@@ -102,7 +102,7 @@ public abstract class OkHttpClientUtil {
 
         Response response = okHttpClient.newCall(request).execute();
         if (!response.isSuccessful()) {
-            logger.error("访问外部系统异常 {}: {}", url, JSON.toJSONString(response));
+            logger.error("访问外部系统异常 {}: {}", url, JsonUtils.toJson(response));
             throw new RemoteAccessException("访问外部系统异常 " + url);
         }
         return response.body().string();

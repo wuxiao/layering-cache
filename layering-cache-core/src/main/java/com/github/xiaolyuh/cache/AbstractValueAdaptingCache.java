@@ -16,7 +16,7 @@
 
 package com.github.xiaolyuh.cache;
 
-import com.alibaba.fastjson.JSON;
+import com.github.xiaolyuh.util.JsonUtils;
 import com.github.xiaolyuh.stats.CacheStats;
 import com.github.xiaolyuh.support.NullValue;
 import org.springframework.util.Assert;
@@ -114,7 +114,7 @@ public abstract class AbstractValueAdaptingCache implements Cache {
         private final Object key;
 
         public LoaderCacheValueException(Object key, Throwable ex) {
-            super(String.format("加载key为 %s 的缓存数据,执行被缓存方法异常", JSON.toJSONString(key)), ex);
+            super(String.format("加载key为 %s 的缓存数据,执行被缓存方法异常", JsonUtils.toJson(key)), ex);
             this.key = key;
         }
 
