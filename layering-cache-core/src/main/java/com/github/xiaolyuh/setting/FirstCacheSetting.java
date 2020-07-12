@@ -94,8 +94,4 @@ public class FirstCacheSetting implements Serializable {
     public void setExpireMode(ExpireMode expireMode) {
         this.expireMode = expireMode;
     }
-
-    public boolean isAllowNullValues() {
-        return false;
-    }
 }
