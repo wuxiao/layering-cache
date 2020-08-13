@@ -15,8 +15,10 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.util.CollectionUtils;
 
 import java.util.*;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
@@ -32,10 +34,19 @@ public class StatsService {
      */
     public static final String CACHE_STATS_KEY_PREFIX = "layering-cache:cache_stats_info:xiaolyuh:";
 
+    private static final AtomicInteger SEQUENCE = new AtomicInteger(1);
+    private static final String PREFIX = "layering-cache-pool";
     /**
      * 定时任务线程池
      */
-    private static ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(50);
+    private static ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor(r -> {
+        Thread thread = new Thread(r);
+        int seq = SEQUENCE.getAndIncrement();
+        thread.setName(PREFIX + (seq > 1 ? "-" + seq : ""));
+        if (!thread.isDaemon())
+            thread.setDaemon(true);
+        return thread;
+    });
 
     /**
      * {@link AbstractCacheManager }
@@ -78,16 +89,15 @@ public class StatsService {
         RedisTemplate<String, Object> redisTemplate = cacheManager.getRedisTemplate();
         // 清空统计数据
         resetCacheStat();
-        executor.scheduleWithFixedDelay(() -> {
+        executorService.scheduleWithFixedDelay(() -> {
             logger.debug("执行缓存统计数据采集定时任务");
             Set<AbstractCacheManager> cacheManagers = AbstractCacheManager.getCacheManager();
             for (AbstractCacheManager abstractCacheManager : cacheManagers) {
                 // 获取CacheManager
-                CacheManager cacheManager = abstractCacheManager;
-                Collection<String> cacheNames = cacheManager.getCacheNames();
+                Collection<String> cacheNames = ((CacheManager) abstractCacheManager).getCacheNames();
                 for (String cacheName : cacheNames) {
                     // 获取Cache
-                    Collection<Cache> caches = cacheManager.getCache(cacheName);
+                    Collection<Cache> caches = ((CacheManager) abstractCacheManager).getCache(cacheName);
                     for (Cache cache : caches) {
                         LayeringCache layeringCache = (LayeringCache) cache;
                         LayeringCacheSetting layeringCacheSetting = layeringCache.getLayeringCacheSetting();
@@ -151,7 +161,7 @@ public class StatsService {
      * 关闭线程池
      */
     public void shutdownExecutor() {
-        executor.shutdown();
+        executorService.shutdown();
     }
 
     /**
