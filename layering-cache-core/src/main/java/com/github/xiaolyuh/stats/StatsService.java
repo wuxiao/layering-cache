@@ -69,7 +69,7 @@ public class StatsService {
         // 遍历找出对应统计数据
         List<CacheStatsInfo> statsList = new ArrayList<>();
         for (String key : layeringCacheKeys) {
-            if (StringUtils.isNotBlank(cacheNameParam) && !key.startsWith(CACHE_STATS_KEY_PREFIX + cacheNameParam)) {
+            if (key.endsWith("_lock") || (StringUtils.isNotBlank(cacheNameParam) && !key.startsWith(CACHE_STATS_KEY_PREFIX + cacheNameParam))) {
                 continue;
             }
 
