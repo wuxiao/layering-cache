@@ -172,6 +172,7 @@ public class StatsService {
         Set<String> layeringCacheKeys = RedisHelper.scan(redisTemplate, CACHE_STATS_KEY_PREFIX + "*");
 
         for (String key : layeringCacheKeys) {
+            if(key.endsWith("_lock")) continue;
             resetCacheStat(key);
         }
     }
