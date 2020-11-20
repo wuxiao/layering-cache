@@ -9,6 +9,7 @@ import org.springframework.util.StringUtils;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Redis分布式锁
@@ -99,7 +100,7 @@ public class Lock {
     /**
      * 锁标记
      */
-    private volatile boolean locked = false;
+    private AtomicBoolean locked = new AtomicBoolean();
 
     private final Random random = new Random();
 
@@ -165,15 +166,15 @@ public class Lock {
         long nowTime = System.nanoTime();
         while ((System.nanoTime() - nowTime) < timeout) {
             if (this.set(lockKey, lockValue, expireTime)) {
-                locked = true;
+                locked.set(true);
                 // 上锁成功结束请求
-                return locked;
+                return locked.get();
             }
 
             // 每次请求等待一段时间
             seleep(10, 50000);
         }
-        return locked;
+        return locked.get();
     }
 
     /**
@@ -184,8 +185,8 @@ public class Lock {
     public boolean lock() {
         this.lockValue = UUID.randomUUID().toString();
         //不存在则添加 且设置过期时间（单位ms）
-        locked = set(lockKey, lockValue, expireTime);
-        return locked;
+        locked.set(set(lockKey, lockValue, expireTime));
+        return locked.get();
     }
 
     /**
@@ -197,9 +198,9 @@ public class Lock {
         this.lockValue = UUID.randomUUID().toString();
         while (true) {
             //不存在则添加 且设置过期时间（单位ms）
-            locked = set(lockKey, lockValue, expireTime);
-            if (locked) {
-                return locked;
+            locked.set(set(lockKey, lockValue, expireTime));
+            if (locked.get()) {
+                return locked.get();
             }
             // 每次请求等待一段时间
             seleep(10, 50000);
@@ -220,7 +221,7 @@ public class Lock {
     public Boolean unlock() {
         // 只有加锁成功并且锁还有效才去释放锁
         // 只有加锁成功并且锁还有效才去释放锁
-        if (locked) {
+        if (locked.get()) {
             try {
                 RedisScript<Long> script = RedisScript.of(UNLOCK_LUA, Long.class);
                 List<String> keys = new ArrayList<>();
@@ -230,7 +231,7 @@ public class Lock {
                     logger.debug("Redis分布式锁，解锁{}失败！解锁时间：{}", lockKeyLog, System.currentTimeMillis());
                 }
 
-                locked = result == 0;
+                locked.set(result == 0);
                 return result == 1;
             } catch (Throwable e) {
                 logger.warn("Redis不支持EVAL命令，使用降级方式解锁：{}", e.getMessage());
@@ -263,11 +264,13 @@ public class Lock {
      */
     private boolean set(final String key, final String value, final long seconds) {
         Assert.isTrue(!StringUtils.isEmpty(key), "key不能为空");
-        Boolean success = redisTemplate.opsForValue().setIfAbsent(key, value, seconds, TimeUnit.SECONDS);
-        if (!StringUtils.isEmpty(lockKeyLog) && Objects.nonNull(success) && success) {
+        Boolean result = redisTemplate.opsForValue().setIfAbsent(key, value);
+        boolean success = Objects.nonNull(result) && result;
+        if (success) redisTemplate.expire(key, seconds, TimeUnit.SECONDS);
+        if (!StringUtils.isEmpty(lockKeyLog) && success) {
             logger.debug("获取锁{}的时间：{}", lockKeyLog, System.currentTimeMillis());
         }
-        return Objects.nonNull(success) && success;
+        return success;
     }
 
     /**
@@ -289,8 +292,7 @@ public class Lock {
      * @author yuhao.wang
      */
     public boolean isLock() {
-
-        return locked;
+        return locked.get();
     }
 
     /**
