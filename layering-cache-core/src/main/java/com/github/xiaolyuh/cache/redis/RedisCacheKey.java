@@ -1,7 +1,7 @@
 package com.github.xiaolyuh.cache.redis;
 
-import com.github.xiaolyuh.serializer.StringRedisSerializer;
-import org.springframework.data.redis.serializer.RedisSerializer;
+import com.github.xiaolyuh.redis.serializer.RedisSerializer;
+import com.github.xiaolyuh.redis.serializer.StringRedisSerializer;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -119,4 +119,7 @@ public class RedisCacheKey {
         return this;
     }
 
+    public Object getKeyElement() {
+        return keyElement;
+    }
 }

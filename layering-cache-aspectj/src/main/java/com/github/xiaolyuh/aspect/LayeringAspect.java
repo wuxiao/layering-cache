@@ -1,16 +1,20 @@
 package com.github.xiaolyuh.aspect;
 
-import com.github.xiaolyuh.annotation.*;
+import com.github.xiaolyuh.annotation.CacheEvict;
+import com.github.xiaolyuh.annotation.CachePut;
+import com.github.xiaolyuh.annotation.Cacheable;
+import com.github.xiaolyuh.annotation.FirstCache;
+import com.github.xiaolyuh.annotation.SecondaryCache;
 import com.github.xiaolyuh.cache.Cache;
 import com.github.xiaolyuh.expression.CacheOperationExpressionEvaluator;
 import com.github.xiaolyuh.manager.CacheManager;
+import com.github.xiaolyuh.redis.serializer.SerializationException;
 import com.github.xiaolyuh.setting.FirstCacheSetting;
 import com.github.xiaolyuh.setting.LayeringCacheSetting;
 import com.github.xiaolyuh.setting.SecondaryCacheSetting;
-import com.github.xiaolyuh.support.CacheOperationInvoker;
 import com.github.xiaolyuh.support.KeyGenerator;
-import com.github.xiaolyuh.support.SerializationException;
 import com.github.xiaolyuh.support.SimpleKeyGenerator;
+import com.github.xiaolyuh.util.ToStringUtils;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -32,6 +36,7 @@ import org.springframework.util.StringUtils;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Objects;
+import java.util.concurrent.Callable;
 
 /**
  * 缓存拦截，用于注册方法信息
@@ -70,7 +75,6 @@ public class LayeringAspect {
 
     @Around("cacheablePointcut()")
     public Object cacheablePointcut(ProceedingJoinPoint joinPoint) throws Throwable {
-        CacheOperationInvoker aopAllianceInvoker = getCacheOperationInvoker(joinPoint);
 
         // 获取method
         Method method = this.getSpecificmethod(joinPoint);
@@ -79,84 +83,48 @@ public class LayeringAspect {
 
         try {
             // 执行查询缓存方法
-            return executeCacheable(aopAllianceInvoker, cacheable, method, joinPoint.getArgs(), joinPoint.getTarget());
+            return executeCacheable(joinPoint, cacheable, method, joinPoint.getArgs(), joinPoint.getTarget());
         } catch (SerializationException e) {
-            // 如果是序列化异常需要先删除原有缓存
+            // 如果是序列化异常需要先删除原有缓存,在执行缓存方法
             String[] cacheNames = cacheable.cacheNames();
-            // 删除缓存
             delete(cacheNames, cacheable.key(), method, joinPoint.getArgs(), joinPoint.getTarget());
-
-            // 忽略操作缓存过程中遇到的异常
-            if (cacheable.ignoreException()) {
-                logger.warn(e.getMessage(), e);
-                return aopAllianceInvoker.invoke();
-            }
-            throw e;
-        } catch (Exception e) {
-            // 忽略操作缓存过程中遇到的异常
-            if (cacheable.ignoreException()) {
-                logger.warn(e.getMessage(), e);
-                return aopAllianceInvoker.invoke();
-            }
-            throw e;
+            return executeCacheable(joinPoint, cacheable, method, joinPoint.getArgs(), joinPoint.getTarget());
         }
     }
 
     @Around("cacheEvictPointcut()")
     public Object cacheEvictPointcut(ProceedingJoinPoint joinPoint) throws Throwable {
-        CacheOperationInvoker aopAllianceInvoker = getCacheOperationInvoker(joinPoint);
-
         // 获取method
         Method method = this.getSpecificmethod(joinPoint);
         // 获取注解
         CacheEvict cacheEvict = AnnotationUtils.findAnnotation(method, CacheEvict.class);
 
-        try {
-            // 执行查询缓存方法
-            return executeEvict(aopAllianceInvoker, cacheEvict, method, joinPoint.getArgs(), joinPoint.getTarget());
-        } catch (Exception e) {
-            // 忽略操作缓存过程中遇到的异常
-            if (cacheEvict.ignoreException()) {
-                logger.warn(e.getMessage(), e);
-                return aopAllianceInvoker.invoke();
-            }
-            throw e;
-        }
+        // 执行查询缓存方法
+        return executeEvict(joinPoint, cacheEvict, method, joinPoint.getArgs(), joinPoint.getTarget());
     }
 
     @Around("cachePutPointcut()")
     public Object cachePutPointcut(ProceedingJoinPoint joinPoint) throws Throwable {
-        CacheOperationInvoker aopAllianceInvoker = getCacheOperationInvoker(joinPoint);
-
         // 获取method
         Method method = this.getSpecificmethod(joinPoint);
         // 获取注解
         CachePut cacheEvict = AnnotationUtils.findAnnotation(method, CachePut.class);
 
-        try {
-            // 执行查询缓存方法
-            return executePut(aopAllianceInvoker, cacheEvict, method, joinPoint.getArgs(), joinPoint.getTarget());
-        } catch (Exception e) {
-            // 忽略操作缓存过程中遇到的异常
-            if (cacheEvict.ignoreException()) {
-                logger.warn(e.getMessage(), e);
-                return aopAllianceInvoker.invoke();
-            }
-            throw e;
-        }
+        // 执行查询缓存方法
+        return executePut(joinPoint, cacheEvict, method, joinPoint.getArgs(), joinPoint.getTarget());
     }
 
     /**
      * 执行Cacheable切面
      *
-     * @param invoker   缓存注解的回调方法
+     * @param joinPoint 连接点
      * @param cacheable {@link Cacheable}
      * @param method    {@link Method}
      * @param args      注解方法参数
      * @param target    target
      * @return {@link Object}
      */
-    private Object executeCacheable(CacheOperationInvoker invoker, Cacheable cacheable,
+    private Object executeCacheable(ProceedingJoinPoint joinPoint, Cacheable cacheable,
                                     Method method, Object[] args, Object target) {
 
         // 解析SpEL表达式获取cacheName和key
@@ -177,28 +145,31 @@ public class LayeringAspect {
                 secondaryCache.isAllowNullValue(), secondaryCache.magnification());
 
         LayeringCacheSetting layeringCacheSetting = new LayeringCacheSetting(firstCacheSetting, secondaryCacheSetting,
-                cacheable.depict());
+                cacheable.depict(), cacheable.enableFirstCache());
 
         // 通过cacheName和缓存配置获取Cache
         Cache cache = cacheManager.getCache(cacheName, layeringCacheSetting);
 
         // 通Cache获取值
-        return cache.get(key, () -> invoker.invoke());
+        return cache.get(ToStringUtils.toString(key), method.getReturnType(), getCacheOperationInvoker(joinPoint));
     }
 
     /**
      * 执行 CacheEvict 切面
      *
-     * @param invoker    缓存注解的回调方法
+     * @param joinPoint  连接点
      * @param cacheEvict {@link CacheEvict}
      * @param method     {@link Method}
      * @param args       注解方法参数
      * @param target     target
      * @return {@link Object}
      */
-    private Object executeEvict(CacheOperationInvoker invoker, CacheEvict cacheEvict,
-                                Method method, Object[] args, Object target) {
+    private Object executeEvict(ProceedingJoinPoint joinPoint, CacheEvict cacheEvict,
+                                Method method, Object[] args, Object target) throws Throwable {
+        // 执行删除方法
+        Object result = joinPoint.proceed();
 
+        // 删除缓存
         // 解析SpEL表达式获取cacheName和key
         String[] cacheNames = cacheEvict.cacheNames();
         Assert.notEmpty(cacheEvict.cacheNames(), CACHE_NAME_ERROR_MESSAGE);
@@ -210,7 +181,7 @@ public class LayeringAspect {
                 if (CollectionUtils.isEmpty(caches)) {
                     // 如果没有找到Cache就新建一个默认的
                     Cache cache = cacheManager.getCache(cacheName,
-                            new LayeringCacheSetting(new FirstCacheSetting(), new SecondaryCacheSetting(), "默认缓存配置（清除时生成）"));
+                            new LayeringCacheSetting(new FirstCacheSetting(), new SecondaryCacheSetting(), "默认缓存配置（清除时生成）", true));
                     cache.clear();
                 } else {
                     for (Cache cache : caches) {
@@ -223,8 +194,7 @@ public class LayeringAspect {
             delete(cacheNames, cacheEvict.key(), method, args, target);
         }
 
-        // 执行方法
-        return invoker.invoke();
+        return result;
     }
 
     /**
@@ -244,11 +214,11 @@ public class LayeringAspect {
             if (CollectionUtils.isEmpty(caches)) {
                 // 如果没有找到Cache就新建一个默认的
                 Cache cache = cacheManager.getCache(cacheName,
-                        new LayeringCacheSetting(new FirstCacheSetting(), new SecondaryCacheSetting(), "默认缓存配置（删除时生成）"));
-                cache.evict(key);
+                        new LayeringCacheSetting(new FirstCacheSetting(), new SecondaryCacheSetting(), "默认缓存配置（删除时生成）", true));
+                cache.evict(ToStringUtils.toString(key));
             } else {
                 for (Cache cache : caches) {
-                    cache.evict(key);
+                    cache.evict(ToStringUtils.toString(key));
                 }
             }
         }
@@ -257,15 +227,14 @@ public class LayeringAspect {
     /**
      * 执行 CachePut 切面
      *
-     * @param invoker  缓存注解的回调方法
-     * @param cachePut {@link CachePut}
-     * @param method   {@link Method}
-     * @param args     注解方法参数
-     * @param target   target
+     * @param joinPoint 连接点
+     * @param cachePut  {@link CachePut}
+     * @param method    {@link Method}
+     * @param args      注解方法参数
+     * @param target    target
      * @return {@link Object}
      */
-    private Object executePut(CacheOperationInvoker invoker, CachePut cachePut, Method method, Object[] args, Object target) {
-
+    private Object executePut(ProceedingJoinPoint joinPoint, CachePut cachePut, Method method, Object[] args, Object target) throws Throwable {
 
         String[] cacheNames = cachePut.cacheNames();
         Assert.notEmpty(cachePut.cacheNames(), CACHE_NAME_ERROR_MESSAGE);
@@ -284,26 +253,26 @@ public class LayeringAspect {
                 secondaryCache.isAllowNullValue(), secondaryCache.magnification());
 
         LayeringCacheSetting layeringCacheSetting = new LayeringCacheSetting(firstCacheSetting, secondaryCacheSetting,
-                cachePut.depict());
+                cachePut.depict(), cachePut.enableFirstCache());
 
         // 指定调用方法获取缓存值
-        Object result = invoker.invoke();
+        Object result = joinPoint.proceed();
 
         for (String cacheName : cacheNames) {
             // 通过cacheName和缓存配置获取Cache
             Cache cache = cacheManager.getCache(cacheName, layeringCacheSetting);
-            cache.put(key, result);
+            cache.put(ToStringUtils.toString(key), result);
         }
 
         return result;
     }
 
-    private CacheOperationInvoker getCacheOperationInvoker(ProceedingJoinPoint joinPoint) {
+    private Callable getCacheOperationInvoker(ProceedingJoinPoint joinPoint) {
         return () -> {
             try {
                 return joinPoint.proceed();
             } catch (Throwable ex) {
-                throw new CacheOperationInvoker.ThrowableWrapperException(ex);
+                throw (Exception) ex;
             }
         };
     }

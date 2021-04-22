@@ -1,6 +1,10 @@
 package com.github.xiaolyuh.test;
 
-import com.github.xiaolyuh.annotation.*;
+import com.github.xiaolyuh.annotation.CacheEvict;
+import com.github.xiaolyuh.annotation.CachePut;
+import com.github.xiaolyuh.annotation.Cacheable;
+import com.github.xiaolyuh.annotation.FirstCache;
+import com.github.xiaolyuh.annotation.SecondaryCache;
 import com.github.xiaolyuh.domain.User;
 import com.github.xiaolyuh.support.CacheMode;
 import org.slf4j.Logger;
@@ -8,7 +12,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -292,6 +301,13 @@ public class TestService {
         return null;
     }
 
+    @CachePut(value = "user:info", ignoreException = false,
+            firstCache = @FirstCache(expireTime = 40, timeUnit = TimeUnit.SECONDS),
+            secondaryCache = @SecondaryCache(expireTime = 100, preloadTime = 30, forceRefresh = true, timeUnit = TimeUnit.SECONDS))
+    public User putUserNoKey(long userId, String[] lastName, User user) {
+        return user;
+    }
+
     @Cacheable(value = "user:info:118", key = "#userId", ignoreException = false,
             firstCache = @FirstCache(expireTime = 4, timeUnit = TimeUnit.SECONDS),
             secondaryCache = @SecondaryCache(expireTime = 10, preloadTime = 3,
@@ -340,7 +356,54 @@ public class TestService {
 
     }
 
+    @CacheEvict(value = "user:info", ignoreException = false)
+    public void evictUserNoKey(long userId, String[] lastName, User user) {
+
+    }
+
     @CacheEvict(value = "user:info", allEntries = true, ignoreException = false)
     public void evictAllUser() {
     }
+
+
+    @Cacheable(value = "user:info:118:3-0-2", key = "#userId", ignoreException = false, enableFirstCache = false,
+            secondaryCache = @SecondaryCache(expireTime = 10, preloadTime = 3,
+                    forceRefresh = true, timeUnit = TimeUnit.SECONDS, isAllowNullValue = true))
+    public User getUserById118DisableFirstCache(long userId) {
+        logger.debug("3.0.2 测试禁用一级缓存");
+        User user = new User();
+        user.setUserId(userId);
+        user.setAge(31);
+        user.setLastName(new String[]{"w", "y", "h"});
+        return user;
+    }
+
+    @CachePut(value = "user:info:3-0-2", key = "#userId", ignoreException = false, enableFirstCache = false,
+            secondaryCache = @SecondaryCache(expireTime = 100, preloadTime = 3, forceRefresh = true, timeUnit = TimeUnit.SECONDS))
+    public User putUserByIdDisableFirstCache(long userId) {
+        logger.debug("3.0.2 测试禁用一级缓存");
+        User user = new User();
+        user.setUserId(userId);
+        user.setAge(311);
+        user.setLastName(new String[]{"w", "y", "h"});
+
+        return user;
+    }
+
+    @Cacheable(value = "user:info:3-1-6", key = "#user.userId",
+            firstCache = @FirstCache(expireTime = 4, timeUnit = TimeUnit.SECONDS), ignoreException = false,
+            secondaryCache = @SecondaryCache(expireTime = 10, preloadTime = 9, forceRefresh = true, timeUnit = TimeUnit.SECONDS))
+    public User refreshSecondCacheSyncFistCache(User user) {
+        logger.debug("测试刷新二级缓存，同步更新一级缓存");
+        return user;
+    }
+
+    @Cacheable(value = "user:info:3-1-6", key = "361-2",
+            firstCache = @FirstCache(expireTime = 4, timeUnit = TimeUnit.SECONDS), ignoreException = false,
+            secondaryCache = @SecondaryCache(expireTime = 10, preloadTime = 7, forceRefresh = true, timeUnit = TimeUnit.SECONDS, isAllowNullValue = true))
+    public User refreshSecondCacheSyncFistCacheNull(User user) {
+        logger.debug("测试刷新二级缓存，同步更新一级缓存");
+        return user;
+    }
+
 }

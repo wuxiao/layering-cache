@@ -17,6 +17,10 @@
 package com.github.xiaolyuh.cache;
 
 import com.github.xiaolyuh.util.JsonUtils;
+import com.github.xiaolyuh.listener.RedisPubSubMessage;
+import com.github.xiaolyuh.listener.RedisPubSubMessageType;
+import com.github.xiaolyuh.listener.RedisPublisher;
+import com.github.xiaolyuh.redis.clinet.RedisClient;
 import com.github.xiaolyuh.stats.CacheStats;
 import com.github.xiaolyuh.support.NullValue;
 import org.springframework.util.Assert;
@@ -27,7 +31,8 @@ import java.util.concurrent.Callable;
 /**
  * Cache 接口的抽象实现类，对公共的方法做了一写实现，如是否允许存NULL值
  * <p>如果允许为NULL值，则需要在内部将NULL替换成{@link NullValue#INSTANCE} 对象
- *  *
+ * *
+ *
  * @author yuhao.wang3
  */
 public abstract class AbstractValueAdaptingCache implements Cache {
@@ -50,8 +55,8 @@ public abstract class AbstractValueAdaptingCache implements Cache {
     /**
      * 通过构造方法设置缓存配置
      *
-     * @param stats           是否开启监控统计
-     * @param name            缓存名称
+     * @param stats 是否开启监控统计
+     * @param name  缓存名称
      */
     protected AbstractValueAdaptingCache(boolean stats, String name) {
         Assert.notNull(name, "缓存名称不能为NULL");
@@ -69,12 +74,6 @@ public abstract class AbstractValueAdaptingCache implements Cache {
     @Override
     public String getName() {
         return this.name;
-    }
-
-    @Override
-    @SuppressWarnings("unchecked")
-    public <T> T get(Object key, Class<T> type) {
-        return (T) fromStoreValue(get(key));
     }
 
     /**
@@ -107,7 +106,7 @@ public abstract class AbstractValueAdaptingCache implements Cache {
 
 
     /**
-     * {@link #get(Object, Callable)} 方法加载缓存值的包装异常
+     * {@link #get(String, Class, Callable)} 方法加载缓存值的包装异常
      */
     public class LoaderCacheValueException extends RuntimeException {
 
@@ -144,5 +143,15 @@ public abstract class AbstractValueAdaptingCache implements Cache {
 
     public void setCacheStats(CacheStats cacheStats) {
         this.cacheStats = cacheStats;
+    }
+
+    public void deleteFirstCache(String key, RedisClient redisClient) {
+        // 删除一级缓存需要用到redis的Pub/Sub（订阅/发布）模式，否则集群中其他服服务器节点的一级缓存数据无法删除
+        RedisPubSubMessage message = new RedisPubSubMessage();
+        message.setCacheName(getName());
+        message.setKey(key);
+        message.setMessageType(RedisPubSubMessageType.EVICT);
+        // 发布消息
+        RedisPublisher.publisher(redisClient, message);
     }
 }

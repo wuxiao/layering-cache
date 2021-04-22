@@ -45,23 +45,27 @@ public class CaffeineCache extends AbstractValueAdaptingCache {
     }
 
     @Override
-    public Object get(Object key) {
-        logger.debug("caffeine缓存 key={} 获取缓存", JsonUtils.toJson(key));
+    public <T> T get(String key, Class<T> resultType) {
+        if (logger.isDebugEnabled()) {
+            logger.debug("caffeine缓存 key={} 获取缓存", JsonUtils.toJson(key));
+        }
 
         if (isStats()) {
             getCacheStats().addCacheRequestCount(1);
         }
 
         if (this.cache instanceof LoadingCache) {
-            return ((LoadingCache<Object, Object>) this.cache).get(key);
+            return (T) ((LoadingCache<Object, Object>) this.cache).get(key);
         }
-        return cache.getIfPresent(key);
+        return (T) cache.getIfPresent(key);
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> T get(Object key, Callable<T> valueLoader) {
-        logger.debug("caffeine缓存 key={} 获取缓存， 如果没有命中就走库加载缓存", JsonUtils.toJson(key));
+    public <T> T get(String key, Class<T> resultType, Callable<T> valueLoader) {
+        if (logger.isDebugEnabled()) {
+            logger.debug("caffeine缓存 key={} 获取缓存， 如果没有命中就走库加载缓存", JsonUtils.toJson(key));
+        }
 
         if (isStats()) {
             getCacheStats().addCacheRequestCount(1);
@@ -77,17 +81,21 @@ public class CaffeineCache extends AbstractValueAdaptingCache {
     }
 
     @Override
-    public void put(Object key, Object value) {
+    public void put(String key, Object value) {
         // 允许存NULL值
         if (isAllowNullValues()) {
-            logger.debug("caffeine缓存 key={} put缓存，缓存值：{}", JsonUtils.toJson(key), JsonUtils.toJson(value));
+            if (logger.isDebugEnabled()) {
+                logger.debug("caffeine缓存 key={} put缓存，缓存值：{}", JsonUtils.toJson(key), JsonUtils.toJson(value));
+            }
             this.cache.put(key, toStoreValue(value));
             return;
         }
 
         // 不允许存NULL值
         if (value != null && !(value instanceof NullValue)) {
-            logger.debug("caffeine缓存 key={} put缓存，缓存值：{}", JsonUtils.toJson(key), JsonUtils.toJson(value));
+            if (logger.isDebugEnabled()) {
+                logger.debug("caffeine缓存 key={} put缓存，缓存值：{}", JsonUtils.toJson(key), JsonUtils.toJson(value));
+            }
             this.cache.put(key, toStoreValue(value));
             return;
         }
@@ -95,17 +103,19 @@ public class CaffeineCache extends AbstractValueAdaptingCache {
     }
 
     @Override
-    public Object putIfAbsent(Object key, Object value) {
-        logger.debug("caffeine缓存 key={} putIfAbsent 缓存，缓存值：{}", JsonUtils.toJson(key), JsonUtils.toJson(value));
+    public <T> T putIfAbsent(String key, Object value, Class<T> resultType) {
+        if (logger.isDebugEnabled()) {
+            logger.debug("caffeine缓存 key={} putIfAbsent 缓存，缓存值：{}", JsonUtils.toJson(key), JsonUtils.toJson(value));
+        }
         boolean flag = !isAllowNullValues() && (value == null || value instanceof NullValue);
         if (flag) {
             return null;
         }
         Object result = this.cache.get(key, k -> toStoreValue(value));
-        return fromStoreValue(result);
+        return (T) fromStoreValue(result);
     }
 
-    @Override
+
     public void evict(Object key) {
         logger.debug("caffeine缓存 key={} 清除缓存", JsonUtils.toJson(key));
         this.cache.invalidate(key);
@@ -128,7 +138,9 @@ public class CaffeineCache extends AbstractValueAdaptingCache {
 
         try {
             T t = valueLoader.call();
-            logger.debug("caffeine缓存 key={} 从库加载缓存", JsonUtils.toJson(key), JsonUtils.toJson(t));
+            if (logger.isDebugEnabled()) {
+                logger.debug("caffeine缓存 key={} 从库加载缓存",  JsonUtils.toJson(key), JsonUtils.toJson(t));
+            }
 
             if (isStats()) {
                 getCacheStats().addCachedMethodRequestTime(System.currentTimeMillis() - start);
@@ -163,5 +175,10 @@ public class CaffeineCache extends AbstractValueAdaptingCache {
     @Override
     public boolean isAllowNullValues() {
         return false;
+    }
+
+    @Override
+    public long estimatedSize() {
+        return cache.estimatedSize();
     }
 }

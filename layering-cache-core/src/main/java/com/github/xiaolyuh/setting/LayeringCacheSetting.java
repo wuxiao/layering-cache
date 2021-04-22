@@ -12,7 +12,7 @@ import java.io.Serializable;
 public class LayeringCacheSetting implements Serializable {
     private static final String SPLIT = "-";
     /**
-     * 内部缓存名，由[一级缓存有效时间-二级缓存有效时间-二级缓存自动刷新时间]组成
+     * 内部缓存名，由[一级缓存有效时间-二级缓存有效时间]组成
      */
     private String internalKey;
 
@@ -24,7 +24,7 @@ public class LayeringCacheSetting implements Serializable {
     /**
      * 是否使用一级缓存
      */
-    boolean useFirstCache = true;
+    boolean enableFirstCache = true;
 
     /**
      * 一级缓存配置
@@ -40,25 +40,24 @@ public class LayeringCacheSetting implements Serializable {
     }
 
     public LayeringCacheSetting(FirstCacheSetting firstCacheSetting, SecondaryCacheSetting secondaryCacheSetting,
-                                String depict) {
+                                String depict, boolean enableFirstCache) {
         this.firstCacheSetting = firstCacheSetting;
         this.secondaryCacheSetting = secondaryCacheSetting;
         this.depict = depict;
+        this.enableFirstCache = enableFirstCache;
         internalKey();
     }
 
     @JsonIgnore
     private void internalKey() {
-        // 一级缓存有效时间-二级缓存有效时间-二级缓存自动刷新时间
+        // 一级缓存有效时间-二级缓存有效时间
         StringBuilder sb = new StringBuilder();
         if (firstCacheSetting != null) {
             sb.append(firstCacheSetting.getTimeUnit().toMillis(firstCacheSetting.getExpireTime()));
         }
-        sb.append(SPLIT);
         if (secondaryCacheSetting != null) {
-            sb.append(secondaryCacheSetting.getTimeUnit().toMillis(secondaryCacheSetting.getExpiration()));
             sb.append(SPLIT);
-            sb.append(secondaryCacheSetting.getTimeUnit().toMillis(secondaryCacheSetting.getPreloadTime()));
+            sb.append(secondaryCacheSetting.getTimeUnit().toMillis(secondaryCacheSetting.getExpiration()));
         }
         internalKey = sb.toString();
     }
@@ -79,12 +78,12 @@ public class LayeringCacheSetting implements Serializable {
         this.internalKey = internalKey;
     }
 
-    public boolean isUseFirstCache() {
-        return useFirstCache;
+    public boolean isEnableFirstCache() {
+        return enableFirstCache;
     }
 
-    public void setUseFirstCache(boolean useFirstCache) {
-        this.useFirstCache = useFirstCache;
+    public void setEnableFirstCache(boolean enableFirstCache) {
+        this.enableFirstCache = enableFirstCache;
     }
 
     public void setFirstCacheSetting(FirstCacheSetting firstCacheSetting) {
