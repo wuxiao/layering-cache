@@ -1,6 +1,5 @@
 package com.github.xiaolyuh.stats;
 
-import com.alibaba.fastjson.JSON;
 import com.github.xiaolyuh.cache.Cache;
 import com.github.xiaolyuh.cache.LayeringCache;
 import com.github.xiaolyuh.manager.AbstractCacheManager;
@@ -10,20 +9,14 @@ import com.github.xiaolyuh.redis.serializer.SerializationException;
 import com.github.xiaolyuh.setting.LayeringCacheSetting;
 import com.github.xiaolyuh.support.LayeringCacheRedisLock;
 import com.github.xiaolyuh.util.GlobalConfig;
+import com.github.xiaolyuh.util.JsonUtils;
 import com.github.xiaolyuh.util.NamedThreadFactory;
 import com.github.xiaolyuh.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.CollectionUtils;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -92,16 +85,17 @@ public class StatsService {
         RedisClient redisClient = cacheManager.getRedisClient();
         // 清空统计数据
         resetCacheStat();
-        executorService.scheduleWithFixedDelay(() -> {
+        executor.scheduleWithFixedDelay(() -> {
             logger.debug("执行缓存统计数据采集定时任务");
             Set<AbstractCacheManager> cacheManagers = AbstractCacheManager.getCacheManager();
             List<CacheStatsInfo> cacheStatsInfos = new LinkedList<>();
             for (AbstractCacheManager abstractCacheManager : cacheManagers) {
                 // 获取CacheManager
-                Collection<String> cacheNames = ((CacheManager) abstractCacheManager).getCacheNames();
+                CacheManager cacheManager = abstractCacheManager;
+                Collection<String> cacheNames = cacheManager.getCacheNames();
                 for (String cacheName : cacheNames) {
                     // 获取Cache
-                    Collection<Cache> caches = ((CacheManager) abstractCacheManager).getCache(cacheName);
+                    Collection<Cache> caches = cacheManager.getCache(cacheName);
                     for (Cache cache : caches) {
                         LayeringCache layeringCache = (LayeringCache) cache;
                         LayeringCacheSetting layeringCacheSetting = layeringCache.getLayeringCacheSetting();
@@ -153,9 +147,6 @@ public class StatsService {
                                 // 将缓存统计数据写到redis
                                 redisClient.set(redisKey, cacheStats, 24, TimeUnit.HOURS, GlobalConfig.GLOBAL_REDIS_SERIALIZER);
                                 cacheStatsInfos.add(cacheStats);
-                                redisTemplate.opsForValue().set(redisKey, cacheStats, 24, TimeUnit.HOURS);
-
-                                logger.info("Layering Cache 统计信息：{}", JsonUtils.toJson(cacheStats));
                             }
                         } catch (Exception e) {
                             logger.error(e.getMessage(), e);
@@ -165,7 +156,7 @@ public class StatsService {
                     }
                 }
             }
-            logger.info("Layering Cache 统计信息：{}", JSON.toJSONString(cacheStatsInfos));
+            logger.info("Layering Cache 统计信息：{}", JsonUtils.toJson(cacheStatsInfos));
             try {
                 // 上报缓存统计信息
                 this.cacheManager.getCacheStatsReportService().reportCacheStats(cacheStatsInfos);
@@ -192,7 +183,7 @@ public class StatsService {
         Set<String> layeringCacheKeys = redisClient.scan(CACHE_STATS_KEY_PREFIX + "*");
 
         for (String key : layeringCacheKeys) {
-            if(key.endsWith("_lock")) continue;
+            if (key.endsWith("_lock")) continue;
             resetCacheStat(key);
         }
     }

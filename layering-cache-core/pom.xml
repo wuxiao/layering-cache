@@ -5,7 +5,7 @@
     <parent>
         <artifactId>layering-cache</artifactId>
         <groupId>com.github.xiaolyuh</groupId>
-        <version>3.3.3</version>
+        <version>3.3.3.jackson</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -24,7 +24,6 @@
         <dependency>
             <groupId>io.lettuce</groupId>
             <artifactId>lettuce-core</artifactId>
-            <optional>true</optional>
         </dependency>
 
         <dependency>
@@ -48,6 +47,12 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <dependency>
+            <groupId>com.esotericsoftware</groupId>
+            <artifactId>kryo-shaded</artifactId>
             <optional>true</optional>
         </dependency>
 

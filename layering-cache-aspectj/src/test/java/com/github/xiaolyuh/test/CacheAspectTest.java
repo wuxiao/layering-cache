@@ -8,7 +8,6 @@ import com.github.xiaolyuh.domain.User;
 import com.github.xiaolyuh.manager.CacheManager;
 import com.github.xiaolyuh.manager.LayeringCacheManager;
 import com.github.xiaolyuh.redis.clinet.RedisClient;
-import com.github.xiaolyuh.redis.serializer.FastJsonRedisSerializer;
 import com.github.xiaolyuh.redis.serializer.JacksonRedisSerializer;
 import com.github.xiaolyuh.redis.serializer.JdkRedisSerializer;
 import com.github.xiaolyuh.redis.serializer.KryoRedisSerializer;
@@ -159,7 +158,7 @@ public class CacheAspectTest {
         Assert.assertNotNull(user1);
         User user = testService.getUserNoParam();
         Assert.assertNotNull(user);
-        Assert.assertEquals(JsonUtils.toJson(user1), JSON.toJSONString(user));
+        Assert.assertEquals(JsonUtils.toJson(user1), JsonUtils.toJson(user));
 
         sleep(5);
         testService.getUserNoParam();
@@ -630,7 +629,6 @@ public class CacheAspectTest {
     public void testSerializer() {
         User user = new User();
         KryoRedisSerializer kryoRedisSerializer = new KryoRedisSerializer();
-        FastJsonRedisSerializer fastJsonRedisSerializer = new FastJsonRedisSerializer();
         JacksonRedisSerializer jacksonRedisSerializer = new JacksonRedisSerializer();
         JdkRedisSerializer jdkRedisSerializer = new JdkRedisSerializer();
         ProtostuffRedisSerializer protostuffRedisSerializer = new ProtostuffRedisSerializer();
@@ -642,12 +640,6 @@ public class CacheAspectTest {
             redisClient.set("Serializer:KryoRedisSerializer", user, 10, TimeUnit.MINUTES, kryoRedisSerializer);
         }
         long kryoSet = System.currentTimeMillis() - start;
-
-        start = System.currentTimeMillis();
-        for (int i = 0; i < count; i++) {
-            redisClient.set("Serializer:fastJsonRedisSerializer", user, 10, TimeUnit.MINUTES, fastJsonRedisSerializer);
-        }
-        long fastJsonSet = System.currentTimeMillis() - start;
 
         start = System.currentTimeMillis();
         for (int i = 0; i < count; i++) {
@@ -673,11 +665,6 @@ public class CacheAspectTest {
         }
         long kryoGet = System.currentTimeMillis() - start;
 
-        start = System.currentTimeMillis();
-        for (int i = 0; i < count; i++) {
-            redisClient.get("Serializer:fastJsonRedisSerializer", User.class, fastJsonRedisSerializer);
-        }
-        long fastJsonGet = System.currentTimeMillis() - start;
 
         start = System.currentTimeMillis();
         for (int i = 0; i < count; i++) {
@@ -699,21 +686,18 @@ public class CacheAspectTest {
 
 
         System.out.println("KryoRedisSerializer:" + kryoRedisSerializer.serialize(user).length + " b");
-        System.out.println("fastJsonRedisSerializer:" + fastJsonRedisSerializer.serialize(user).length + " b");
         System.out.println("jacksonRedisSerializer:" + jacksonRedisSerializer.serialize(user).length + " b");
         System.out.println("jdkRedisSerializer:" + jdkRedisSerializer.serialize(user).length + " b");
         System.out.println("protostuffRedisSerializer:" + protostuffRedisSerializer.serialize(user).length + " b");
         System.out.println();
 
         System.out.println("KryoRedisSerializer serialize:" + kryoSet + " ms");
-        System.out.println("fastJsonRedisSerializer serialize:" + fastJsonSet + " ms");
         System.out.println("jacksonRedisSerializer serialize:" + jacksonSet + " ms");
         System.out.println("jdkRedisSerializer serialize:" + jdkSet + " ms");
         System.out.println("protostuffRedisSerializer serialize:" + protostufSet + " ms");
         System.out.println();
 
         System.out.println("KryoRedisSerializer deserialize:" + kryoGet + " ms");
-        System.out.println("fastJsonRedisSerializer deserialize:" + fastJsonGet + " ms");
         System.out.println("jacksonRedisSerializer deserialize:" + jacksonGet + " ms");
         System.out.println("jdkRedisSerializer deserialize:" + jdkGet + " ms");
         System.out.println("protostuffRedisSerializer deserialize:" + protostufGet + " ms");

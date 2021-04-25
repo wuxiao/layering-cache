@@ -1,6 +1,5 @@
 package com.github.xiaolyuh.util;
 
-import com.alibaba.fastjson.JSON;
 
 import java.util.Objects;
 
@@ -24,7 +23,7 @@ public class ToStringUtils {
         if (object instanceof String) {
             return (String) object;
         }
-        String string = JSON.toJSONString(object);
+        String string = JsonUtils.toJson(object);
         return string.replace("\"", "").replace("{", "").replace("}", "");
     }
 

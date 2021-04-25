@@ -1,8 +1,8 @@
 package com.github.xiaolyuh.listener;
 
-import com.alibaba.fastjson.JSON;
 import com.github.xiaolyuh.redis.clinet.RedisClient;
 import com.github.xiaolyuh.util.GlobalConfig;
+import com.github.xiaolyuh.util.JsonUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,7 +37,7 @@ public class RedisPublisher {
      * @param nameSpace   命名空间
      */
     public static void publisher(RedisClient redisClient, RedisPubSubMessage message, String nameSpace) {
-        String messageJson = JSON.toJSONString(message);
+        String messageJson = JsonUtils.toJson(message);
         // pull 拉模式消息
         redisClient.lpush(GlobalConfig.getMessageRedisKey(nameSpace), GlobalConfig.GLOBAL_REDIS_SERIALIZER, messageJson);
         redisClient.expire(GlobalConfig.getMessageRedisKey(nameSpace), 25, TimeUnit.HOURS);

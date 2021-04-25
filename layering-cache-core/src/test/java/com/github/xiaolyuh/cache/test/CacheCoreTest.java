@@ -1,6 +1,5 @@
 package com.github.xiaolyuh.cache.test;
 
-import com.alibaba.fastjson.JSON;
 import com.github.xiaolyuh.cache.Cache;
 import com.github.xiaolyuh.cache.LayeringCache;
 import com.github.xiaolyuh.cache.config.CacheConfig;
@@ -18,6 +17,7 @@ import com.github.xiaolyuh.stats.CacheStats;
 import com.github.xiaolyuh.support.ExpireMode;
 import com.github.xiaolyuh.support.LayeringCacheRedisLock;
 import com.github.xiaolyuh.util.GlobalConfig;
+import com.github.xiaolyuh.util.JsonUtils;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -649,7 +649,7 @@ public class CacheCoreTest {
         message.setCacheName(cacheName);
         message.setKey(cacheKey);
         message.setMessageType(RedisPubSubMessageType.EVICT);
-        String messageJson = JSON.toJSONString(message);
+        String messageJson = JsonUtils.toJson(message);
         // pull 拉模式消息
         redisClient.lpush(GlobalConfig.getMessageRedisKey(), GlobalConfig.GLOBAL_REDIS_SERIALIZER, messageJson);
         redisClient.expire(GlobalConfig.getMessageRedisKey(), 25, TimeUnit.MINUTES);
@@ -659,7 +659,7 @@ public class CacheCoreTest {
         RedisPubSubMessage message = new RedisPubSubMessage();
         message.setCacheName(cacheName);
         message.setMessageType(RedisPubSubMessageType.CLEAR);
-        String messageJson = JSON.toJSONString(message);
+        String messageJson = JsonUtils.toJson(message);
         // pull 拉模式消息
         redisClient.lpush(GlobalConfig.getMessageRedisKey(), GlobalConfig.GLOBAL_REDIS_SERIALIZER, messageJson);
         redisClient.expire(GlobalConfig.getMessageRedisKey(), 25, TimeUnit.MINUTES);

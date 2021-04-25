@@ -1,12 +1,12 @@
 package com.github.xiaolyuh.redis.clinet;
 
-import com.alibaba.fastjson.JSON;
 import com.github.xiaolyuh.listener.RedisMessageListener;
 import com.github.xiaolyuh.redis.command.TencentScan;
 import com.github.xiaolyuh.redis.serializer.JdkRedisSerializer;
 import com.github.xiaolyuh.redis.serializer.RedisSerializer;
 import com.github.xiaolyuh.redis.serializer.SerializationException;
 import com.github.xiaolyuh.redis.serializer.StringRedisSerializer;
+import com.github.xiaolyuh.util.JsonUtils;
 import com.github.xiaolyuh.util.NamedThreadFactory;
 import com.github.xiaolyuh.util.StringUtils;
 import io.lettuce.core.RedisURI;
@@ -75,7 +75,7 @@ public class ClusterRedisClient implements RedisClient {
     private StatefulRedisPubSubConnection<String, String> pubSubConnection;
 
     public ClusterRedisClient(RedisProperties properties) {
-        logger.info("layering-cache redis配置" + JSON.toJSONString(properties));
+        logger.info("layering-cache redis配置" + JsonUtils.toJson(properties));
 
         String cluster = properties.getCluster();
         String[] parts = cluster.split("\\,");

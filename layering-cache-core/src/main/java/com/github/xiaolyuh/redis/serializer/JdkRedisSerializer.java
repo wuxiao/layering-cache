@@ -1,12 +1,8 @@
 package com.github.xiaolyuh.redis.serializer;
 
-import com.alibaba.fastjson.JSON;
+import com.github.xiaolyuh.util.JsonUtils;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
+import java.io.*;
 import java.util.Arrays;
 
 /**
@@ -32,7 +28,7 @@ public class JdkRedisSerializer extends AbstractRedisSerializer {
             objectOutputStream.flush();
             return outputStream.toByteArray();
         } catch (Exception e) {
-            throw new SerializationException(String.format("JdkRedisSerializer 序列化异常: %s, 【%s】", e.getMessage(), JSON.toJSONString(value)), e);
+            throw new SerializationException(String.format("JdkRedisSerializer 序列化异常: %s, 【%s】", e.getMessage(), JsonUtils.toJson(value)), e);
         }
     }
 
@@ -50,7 +46,7 @@ public class JdkRedisSerializer extends AbstractRedisSerializer {
              ObjectInputStream stream = new ObjectInputStream(byteStream)) {
             return (T) stream.readObject();
         } catch (Exception e) {
-            throw new SerializationException(String.format("JdkRedisSerializer 反序列化异常: %s, 【%s】", e.getMessage(), JSON.toJSONString(bytes)), e);
+            throw new SerializationException(String.format("JdkRedisSerializer 反序列化异常: %s, 【%s】", e.getMessage(), JsonUtils.toJson(bytes)), e);
         }
     }
 }

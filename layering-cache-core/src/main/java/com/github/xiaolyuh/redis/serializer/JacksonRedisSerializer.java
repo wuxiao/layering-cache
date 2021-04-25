@@ -1,11 +1,11 @@
 package com.github.xiaolyuh.redis.serializer;
 
-import com.alibaba.fastjson.JSON;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.github.xiaolyuh.util.JsonUtils;
 
 import java.util.Arrays;
 
@@ -31,7 +31,7 @@ public class JacksonRedisSerializer extends AbstractRedisSerializer {
         try {
             return this.objectMapper.writeValueAsBytes(value);
         } catch (Exception e) {
-            throw new SerializationException(String.format("JacksonRedisSerializer 序列化异常: %s, 【%s】", e.getMessage(), JSON.toJSONString(value)), e);
+            throw new SerializationException(String.format("JacksonRedisSerializer 序列化异常: %s, 【%s】", e.getMessage(), JsonUtils.toJson(value)), e);
         }
     }
 
@@ -48,7 +48,7 @@ public class JacksonRedisSerializer extends AbstractRedisSerializer {
         try {
             return this.objectMapper.readValue(bytes, 0, bytes.length, resultType);
         } catch (Exception e) {
-            throw new SerializationException(String.format("JacksonRedisSerializer 反序列化异常: %s, 【%s】", e.getMessage(), JSON.toJSONString(bytes)), e);
+            throw new SerializationException(String.format("JacksonRedisSerializer 反序列化异常: %s, 【%s】", e.getMessage(), JsonUtils.toJson(bytes)), e);
         }
 
     }

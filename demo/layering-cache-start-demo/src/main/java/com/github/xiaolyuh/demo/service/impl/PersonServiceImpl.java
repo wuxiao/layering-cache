@@ -9,7 +9,6 @@ import com.github.xiaolyuh.demo.entity.Person;
 import com.github.xiaolyuh.demo.entity.User;
 import com.github.xiaolyuh.demo.service.PersonService;
 import com.github.xiaolyuh.redis.clinet.RedisClient;
-import com.github.xiaolyuh.redis.serializer.FastJsonRedisSerializer;
 import com.github.xiaolyuh.redis.serializer.JacksonRedisSerializer;
 import com.github.xiaolyuh.redis.serializer.JdkRedisSerializer;
 import com.github.xiaolyuh.redis.serializer.KryoRedisSerializer;
@@ -71,7 +70,6 @@ public class PersonServiceImpl implements PersonService {
     public void testSerializer() {
         User user = new User();
         KryoRedisSerializer kryoRedisSerializer = new KryoRedisSerializer();
-        FastJsonRedisSerializer fastJsonRedisSerializer = new FastJsonRedisSerializer();
         JacksonRedisSerializer jacksonRedisSerializer = new JacksonRedisSerializer();
         JdkRedisSerializer jdkRedisSerializer = new JdkRedisSerializer();
         ProtostuffRedisSerializer protostuffRedisSerializer = new ProtostuffRedisSerializer();
@@ -84,13 +82,6 @@ public class PersonServiceImpl implements PersonService {
         }
         long kryoSet = System.currentTimeMillis() - start;
         String kryoSetSInfo = systemInfo();
-
-        start = System.currentTimeMillis();
-        for (int i = 0; i < count; i++) {
-            redisClient.set("Serializer:fastJsonRedisSerializer", user, 10, TimeUnit.MINUTES, fastJsonRedisSerializer);
-        }
-        long fastJsonSet = System.currentTimeMillis() - start;
-        String fastJsonSetSInfo = systemInfo();
 
         start = System.currentTimeMillis();
         for (int i = 0; i < count; i++) {
@@ -122,13 +113,6 @@ public class PersonServiceImpl implements PersonService {
 
         start = System.currentTimeMillis();
         for (int i = 0; i < count; i++) {
-            redisClient.get("Serializer:fastJsonRedisSerializer", User.class, fastJsonRedisSerializer);
-        }
-        long fastJsonGet = System.currentTimeMillis() - start;
-        String fastJsonGetInfo = systemInfo();
-
-        start = System.currentTimeMillis();
-        for (int i = 0; i < count; i++) {
             redisClient.get("Serializer:jacksonRedisSerializer", User.class, jacksonRedisSerializer);
         }
         long jacksonGet = System.currentTimeMillis() - start;
@@ -150,21 +134,18 @@ public class PersonServiceImpl implements PersonService {
 
 
         System.out.println("KryoRedisSerializer:" + kryoRedisSerializer.serialize(user).length + " b");
-        System.out.println("fastJsonRedisSerializer:" + fastJsonRedisSerializer.serialize(user).length + " b");
         System.out.println("jacksonRedisSerializer:" + jacksonRedisSerializer.serialize(user).length + " b");
         System.out.println("jdkRedisSerializer:" + jdkRedisSerializer.serialize(user).length + " b");
         System.out.println("protostuffRedisSerializer:" + protostuffRedisSerializer.serialize(user).length + " b");
         System.out.println();
 
         System.out.println("KryoRedisSerializer serialize:" + kryoSet + " ms  " + kryoSetSInfo);
-        System.out.println("fastJsonRedisSerializer serialize:" + fastJsonSet + " ms  " + fastJsonSetSInfo);
         System.out.println("jacksonRedisSerializer serialize:" + jacksonSet + " ms  " + jacksonSetSInfo);
         System.out.println("jdkRedisSerializer serialize:" + jdkSet + " ms  " + jdkSetInfo);
         System.out.println("protostuffRedisSerializer serialize:" + protostufSet + " ms  " + protostufSetInfo);
         System.out.println();
 
         System.out.println("KryoRedisSerializer deserialize:" + kryoGet + " ms  " + kryoGetInfo);
-        System.out.println("fastJsonRedisSerializer deserialize:" + fastJsonGet + " ms  " + fastJsonGetInfo);
         System.out.println("jacksonRedisSerializer deserialize:" + jacksonGet + " ms  " + jacksonGetInfo);
         System.out.println("jdkRedisSerializer deserialize:" + jdkGet + " ms  " + jdkGetInfo);
         System.out.println("protostuffRedisSerializer deserialize:" + protostufGet + " ms  " + protostufGetInfo);

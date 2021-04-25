@@ -2,11 +2,9 @@ package com.github.xiaolyuh.cache.config;
 
 import com.github.xiaolyuh.aspect.LayeringAspect;
 import com.github.xiaolyuh.cache.properties.LayeringCacheProperties;
-import com.github.xiaolyuh.cache.properties.LayeringCacheRedisProperties;
 import com.github.xiaolyuh.manager.CacheManager;
 import com.github.xiaolyuh.manager.LayeringCacheManager;
 import com.github.xiaolyuh.redis.clinet.RedisClient;
-import com.github.xiaolyuh.redis.clinet.RedisProperties;
 import com.github.xiaolyuh.redis.serializer.AbstractRedisSerializer;
 import com.github.xiaolyuh.redis.serializer.StringRedisSerializer;
 import com.github.xiaolyuh.stats.extend.CacheStatsReportService;
@@ -15,6 +13,7 @@ import com.github.xiaolyuh.util.GlobalConfig;
 import com.github.xiaolyuh.util.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.data.redis.RedisProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -27,7 +26,7 @@ import org.springframework.context.annotation.EnableAspectJAutoProxy;
  */
 @Configuration
 @EnableAspectJAutoProxy
-@EnableConfigurationProperties({LayeringCacheProperties.class, LayeringCacheRedisProperties.class})
+@EnableConfigurationProperties({LayeringCacheProperties.class, RedisProperties.class})
 public class LayeringCacheAutoConfig {
 
     @Value("${spring.application.name:}")
@@ -58,25 +57,24 @@ public class LayeringCacheAutoConfig {
         return new LayeringAspect();
     }
 
-    @Bean
-    public RedisProperties redisProperties(LayeringCacheRedisProperties layeringCacheRedisProperties) {
-        RedisProperties redisProperties = new RedisProperties();
-        redisProperties.setDatabase(layeringCacheRedisProperties.getDatabase());
-        redisProperties.setHost(layeringCacheRedisProperties.getHost());
-        redisProperties.setCluster(layeringCacheRedisProperties.getCluster());
-        redisProperties.setPassword(StringUtils.isBlank(layeringCacheRedisProperties.getPassword()) ? null : layeringCacheRedisProperties.getPassword());
-        redisProperties.setPort(layeringCacheRedisProperties.getPort());
-        redisProperties.setSerializer(layeringCacheRedisProperties.getSerializer());
+    public com.github.xiaolyuh.redis.clinet.RedisProperties redisProperties(LayeringCacheProperties layeringCacheProperties, RedisProperties props) {
+        com.github.xiaolyuh.redis.clinet.RedisProperties redisProperties = new com.github.xiaolyuh.redis.clinet.RedisProperties();
+        redisProperties.setDatabase(props.getDatabase());
+        redisProperties.setHost(props.getHost());
+        redisProperties.setPassword(StringUtils.isBlank(props.getPassword()) ? null : props.getPassword());
+        redisProperties.setPort(props.getPort());
+        redisProperties.setEnableSsl(props.isSsl());
+        redisProperties.setSerializer(layeringCacheProperties.getSerializer());
         return redisProperties;
     }
 
     @Bean
     @ConditionalOnMissingBean(RedisClient.class)
-    public RedisClient layeringCacheRedisClient(RedisProperties redisProperties) throws Exception {
-        AbstractRedisSerializer valueRedisSerializer = (AbstractRedisSerializer) Class.forName(redisProperties.getSerializer()).newInstance();
+    public RedisClient layeringCacheRedisClient(LayeringCacheProperties layeringCacheProperties, RedisProperties redisProperties) throws Exception {
+        AbstractRedisSerializer valueRedisSerializer = (AbstractRedisSerializer) Class.forName(layeringCacheProperties.getSerializer()).newInstance();
         StringRedisSerializer keyRedisSerializer = new StringRedisSerializer();
 
-        RedisClient redisClient = RedisClient.getInstance(redisProperties);
+        RedisClient redisClient = RedisClient.getInstance(redisProperties(layeringCacheProperties, redisProperties));
         redisClient.setKeySerializer(keyRedisSerializer);
         redisClient.setValueSerializer(valueRedisSerializer);
         return redisClient;

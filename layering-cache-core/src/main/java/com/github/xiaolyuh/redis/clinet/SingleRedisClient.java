@@ -1,18 +1,13 @@
 package com.github.xiaolyuh.redis.clinet;
 
-import com.alibaba.fastjson.JSON;
 import com.github.xiaolyuh.listener.RedisMessageListener;
 import com.github.xiaolyuh.redis.serializer.JdkRedisSerializer;
 import com.github.xiaolyuh.redis.serializer.RedisSerializer;
 import com.github.xiaolyuh.redis.serializer.SerializationException;
 import com.github.xiaolyuh.redis.serializer.StringRedisSerializer;
+import com.github.xiaolyuh.util.JsonUtils;
 import com.github.xiaolyuh.util.StringUtils;
-import io.lettuce.core.KeyScanCursor;
-import io.lettuce.core.RedisURI;
-import io.lettuce.core.ScanArgs;
-import io.lettuce.core.ScanCursor;
-import io.lettuce.core.ScriptOutputType;
-import io.lettuce.core.SetArgs;
+import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.ByteArrayCodec;
@@ -21,12 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.CollectionUtils;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -57,12 +47,13 @@ public class SingleRedisClient implements RedisClient {
         RedisURI redisURI = RedisURI.builder().withHost(properties.getHost())
                 .withDatabase(properties.getDatabase())
                 .withPort(properties.getPort())
+                .withSsl(properties.enableSsl)
                 .build();
         if (StringUtils.isNotBlank(properties.getPassword())) {
             redisURI.setPassword(properties.getPassword());
         }
 
-        logger.info("layering-cache redis配置" + JSON.toJSONString(properties));
+        logger.info("layering-cache redis配置" + JsonUtils.toJson(properties));
         this.client = io.lettuce.core.RedisClient.create(redisURI);
         this.connection = client.connect(new ByteArrayCodec());
         this.pubSubConnection = client.connectPubSub();

@@ -1,6 +1,6 @@
 package com.github.xiaolyuh.redis.serializer;
 
-import com.alibaba.fastjson.JSON;
+import com.github.xiaolyuh.util.JsonUtils;
 import io.protostuff.LinkedBuffer;
 import io.protostuff.ProtostuffIOUtil;
 import io.protostuff.runtime.RuntimeSchema;
@@ -34,7 +34,7 @@ public class ProtostuffRedisSerializer extends AbstractRedisSerializer {
         try {
             return ProtostuffIOUtil.toByteArray(new Wrapper<>(value), schema, buffer);
         } catch (Exception e) {
-            throw new SerializationException(String.format("ProtostuffRedisSerializer 序列化异常: %s, 【%s】", e.getMessage(), JSON.toJSONString(value)), e);
+            throw new SerializationException(String.format("ProtostuffRedisSerializer 序列化异常: %s, 【%s】", e.getMessage(), JsonUtils.toJson(value)), e);
         } finally {
             buffer.clear();
         }
@@ -55,7 +55,7 @@ public class ProtostuffRedisSerializer extends AbstractRedisSerializer {
             ProtostuffIOUtil.mergeFrom(bytes, wrapper, schema);
             return wrapper.getData();
         } catch (Exception e) {
-            throw new SerializationException(String.format("ProtostuffRedisSerializer 反序列化异常: %s, 【%s】", e.getMessage(), JSON.toJSONString(bytes)), e);
+            throw new SerializationException(String.format("ProtostuffRedisSerializer 反序列化异常: %s, 【%s】", e.getMessage(), JsonUtils.toJson(bytes)), e);
         }
     }
 

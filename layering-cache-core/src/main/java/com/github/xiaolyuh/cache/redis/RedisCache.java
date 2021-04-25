@@ -363,7 +363,7 @@ public class RedisCache extends AbstractValueAdaptingCache {
                         // 加载数据并放到缓存
                         Object newDate = loaderAndPutValue(redisCacheKey, valueLoader, false);
                         // 比较新老数据是否相等，如果不想等就删除一级缓存
-                        if (!Objects.equals(oldDate, newDate) && !JSON.toJSONString(oldDate).equals(JSON.toJSONString(newDate))) {
+                        if (!Objects.equals(oldDate, newDate) && !JsonUtils.toJson(oldDate).equals(JsonUtils.toJson(newDate))) {
                             logger.debug("二级缓存数据发生变更，同步刷新一级缓存");
                             deleteFirstCache((String) redisCacheKey.getKeyElement(), redisClient);
                         }

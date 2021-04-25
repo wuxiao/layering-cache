@@ -18,6 +18,15 @@ public class LayeringCacheProperties {
      */
     private String namespace;
 
+    /**
+     * 序列化方式:
+     * com.github.xiaolyuh.redis.serializer.KryoRedisSerializer
+     * com.github.xiaolyuh.redis.serializer.JacksonRedisSerializer
+     * com.github.xiaolyuh.redis.serializer.JdkRedisSerializer
+     * com.github.xiaolyuh.redis.serializer.ProtostuffRedisSerializer
+     */
+    private String serializer = "com.github.xiaolyuh.redis.serializer.ProtostuffRedisSerializer";
+
     public boolean isStats() {
         return stats;
     }
@@ -32,5 +41,13 @@ public class LayeringCacheProperties {
 
     public void setNamespace(String namespace) {
         this.namespace = namespace;
+    }
+
+    public String getSerializer() {
+        return serializer;
+    }
+
+    public void setSerializer(String serializer) {
+        this.serializer = serializer;
     }
 }

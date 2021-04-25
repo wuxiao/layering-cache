@@ -1,6 +1,5 @@
 package com.github.xiaolyuh.test;
 
-import com.alibaba.fastjson.JSON;
 import com.github.xiaolyuh.cache.Cache;
 import com.github.xiaolyuh.cache.LayeringCache;
 import com.github.xiaolyuh.config.CacheClusterConfig;
@@ -10,6 +9,7 @@ import com.github.xiaolyuh.manager.LayeringCacheManager;
 import com.github.xiaolyuh.redis.clinet.RedisClient;
 import com.github.xiaolyuh.support.CacheMode;
 import com.github.xiaolyuh.util.GlobalConfig;
+import com.github.xiaolyuh.util.JsonUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -395,7 +395,7 @@ public class CacheClusterAspectTest {
         long userId = 116;
         testService.putUser(userId);
         User user = testService.getUserById(userId);
-        logger.debug(JSON.toJSONString(user));
+        logger.debug(JsonUtils.toJson(user));
         Assert.assertNotNull(user);
         Assert.assertEquals(user.getUserId(), 11L);
     }
@@ -403,7 +403,7 @@ public class CacheClusterAspectTest {
     @Test
     public void testPutUserNoParam() {
         User user = testService.putUserNoParam();
-        logger.debug(JSON.toJSONString(user));
+        logger.debug(JsonUtils.toJson(user));
         Assert.assertNotNull(user);
         Assert.assertEquals(user.getUserId(), 11L);
     }
@@ -414,7 +414,7 @@ public class CacheClusterAspectTest {
         testService.putNullUser1118(userId);
         sleep(1);
         User user = testService.getUserById118(userId);
-        logger.debug(JSON.toJSONString(user));
+        logger.debug(JsonUtils.toJson(user));
         Assert.assertNull(user);
     }
 
@@ -424,7 +424,7 @@ public class CacheClusterAspectTest {
         long userId = 118_1117_1;
         testService.putNullUserAllowNullValueTrueMagnification(userId);
         User user = testService.getUserById(userId);
-        logger.debug(JSON.toJSONString(user));
+        logger.debug(JsonUtils.toJson(user));
         long expire = redisClient.getExpire("user:info:11811171");
         System.out.println("==================1:" + expire);
         Assert.assertNull(user);
@@ -447,7 +447,7 @@ public class CacheClusterAspectTest {
         long userId = 118_1117_6;
         testService.putNullUserAllowNullValueFalse(userId);
         User user = testService.getUserById(userId);
-        logger.debug(JSON.toJSONString(user));
+        logger.debug(JsonUtils.toJson(user));
         Assert.assertNotNull(user);
     }
 

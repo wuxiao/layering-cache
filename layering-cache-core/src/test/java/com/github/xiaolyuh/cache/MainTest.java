@@ -1,12 +1,11 @@
 package com.github.xiaolyuh.cache;
 
-import com.alibaba.fastjson.JSON;
-import com.github.xiaolyuh.redis.serializer.FastJsonRedisSerializer;
 import com.github.xiaolyuh.redis.serializer.JacksonRedisSerializer;
 import com.github.xiaolyuh.redis.serializer.JdkRedisSerializer;
 import com.github.xiaolyuh.redis.serializer.KryoRedisSerializer;
 import com.github.xiaolyuh.redis.serializer.ProtostuffRedisSerializer;
 import com.github.xiaolyuh.support.NullValue;
+import com.github.xiaolyuh.util.JsonUtils;
 
 import java.util.Arrays;
 
@@ -20,14 +19,11 @@ public class MainTest {
         System.out.println(Double.isNaN(b));
         System.out.println(Double.isInfinite(b));
         System.out.println(Double.isInfinite(1.0));
-        System.out.println(JSON.toJSONString(null));
-        System.out.println(JSON.toJSONString(new NullValue()));
+        System.out.println(JsonUtils.toJson(null));
+        System.out.println(JsonUtils.toJson(new NullValue()));
 
         KryoRedisSerializer kryoRedisSerializer = new KryoRedisSerializer();
         System.out.println("KryoRedisSerializer:" + Arrays.toString(kryoRedisSerializer.getNullValueBytes()));
-
-        FastJsonRedisSerializer fastJsonRedisSerializer = new FastJsonRedisSerializer();
-        System.out.println("FastJsonRedisSerializer:" + Arrays.toString(fastJsonRedisSerializer.getNullValueBytes()));
 
         JacksonRedisSerializer jacksonRedisSerializer = new JacksonRedisSerializer();
         System.out.println("JacksonRedisSerializer:" + Arrays.toString(jacksonRedisSerializer.getNullValueBytes()));

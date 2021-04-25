@@ -1,12 +1,12 @@
 package com.github.xiaolyuh.listener;
 
-import com.alibaba.fastjson.JSON;
 import com.github.xiaolyuh.cache.Cache;
 import com.github.xiaolyuh.cache.LayeringCache;
 import com.github.xiaolyuh.manager.AbstractCacheManager;
 import com.github.xiaolyuh.support.LayeringCacheRedisLock;
 import com.github.xiaolyuh.util.BeanFactory;
 import com.github.xiaolyuh.util.GlobalConfig;
+import com.github.xiaolyuh.util.JsonUtils;
 import com.github.xiaolyuh.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,7 +84,7 @@ public class RedisMessageService {
                 continue;
             }
 
-            RedisPubSubMessage redisPubSubMessage = JSON.parseObject(message, RedisPubSubMessage.class);
+            RedisPubSubMessage redisPubSubMessage = JsonUtils.parse(message, RedisPubSubMessage.class);
             // 根据缓存名称获取多级缓存，可能有多个
             Collection<Cache> caches = cacheManager.getCache(redisPubSubMessage.getCacheName());
             for (Cache cache : caches) {

@@ -115,9 +115,11 @@ public class CaffeineCache extends AbstractValueAdaptingCache {
         return (T) fromStoreValue(result);
     }
 
-
-    public void evict(Object key) {
-        logger.debug("caffeine缓存 key={} 清除缓存", JsonUtils.toJson(key));
+    @Override
+    public void evict(String key) {
+        if (logger.isDebugEnabled()) {
+            logger.debug("caffeine缓存 key={} 清除缓存", JsonUtils.toJson(key));
+        }
         this.cache.invalidate(key);
     }
 
