@@ -1,10 +1,6 @@
 package com.github.xiaolyuh.aspect;
 
-import com.github.xiaolyuh.annotation.CacheEvict;
-import com.github.xiaolyuh.annotation.CachePut;
-import com.github.xiaolyuh.annotation.Cacheable;
-import com.github.xiaolyuh.annotation.FirstCache;
-import com.github.xiaolyuh.annotation.SecondaryCache;
+import com.github.xiaolyuh.annotation.*;
 import com.github.xiaolyuh.cache.Cache;
 import com.github.xiaolyuh.expression.CacheOperationExpressionEvaluator;
 import com.github.xiaolyuh.manager.CacheManager;
@@ -53,7 +49,8 @@ public class LayeringAspect {
     /**
      * SpEL表达式计算器
      */
-    private final CacheOperationExpressionEvaluator evaluator = new CacheOperationExpressionEvaluator();
+    @Autowired(required = false)
+    private CacheOperationExpressionEvaluator evaluator = new CacheOperationExpressionEvaluator();
 
     @Autowired
     private CacheManager cacheManager;
