@@ -14,7 +14,24 @@ import org.slf4j.LoggerFactory;
 public class RedisMessageListener implements RedisPubSubListener<String, String> {
     private static final Logger log = LoggerFactory.getLogger(RedisMessageListener.class);
 
-    public static final String CHANNEL = "layering-cache-channel";
+    //默认为"layering-cache-channel:{ENV}-{SERVICE_NAME}"，可自定义
+    public static final String CHANNEL_PREFIX = "layering-cache-channel";
+    public static final String CHANNEL;
+
+    static {
+        String env = getValue("ENVIRONMENT");
+        String serviceName = getValue("SERVICE_NAME");
+        String envChannel = getValue("layering.cache.channel");
+        if (envChannel.isEmpty()) {
+            if (!env.isEmpty() && !serviceName.isEmpty()) {
+                CHANNEL = CHANNEL_PREFIX + ":" + env + "-" + serviceName;
+            } else {
+                CHANNEL = CHANNEL_PREFIX;
+            }
+        } else {
+            CHANNEL = envChannel;
+        }
+    }
 
     /**
      * redis消息处理器
@@ -67,5 +84,19 @@ public class RedisMessageListener implements RedisPubSubListener<String, String>
     @Override
     public void punsubscribed(String pattern, long count) {
 
+    }
+
+    private static String getValue(String key) {
+        String value = System.getProperty(key);
+        if (value == null) value = System.getenv(key);
+        return value == null ? "" : value;
+    }
+
+    private static String getValue(String key, String def) {
+        String value = getValue(key);
+        if (value.isEmpty()) {
+            return def;
+        }
+        return value;
     }
 }
